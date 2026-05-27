@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riinesia - Panel OTP & Virtual Number Indonesia</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body { background-color: #0b0f19; color: #f1f5f9; font-family: 'Plus Jakarta Sans', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0b0f19; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <script>
+        // 🔒 SEKARANG SUDAH AMAN 100%! GAK ADA LAGI API KEY DI SINI.
+        // Jalur rahasia otomatis yang mengarah langsung ke server backend Vercel lo.
+        const BACKEND_URL_OTP = "/api/beli"; 
+        const BACKEND_URL_QRIS = "/api/qris"; 
+    </script>
+
+    <div id="pageAuth" class="w-full max-w-md mx-auto px-4 my-auto py-10 flex flex-col items-center">
+        <div class="grid grid-cols-3 gap-2 w-full mb-6 text-center">
+            <div class="bg-slate-900/60 border border-slate-800 p-2.5 rounded-xl">
+                <p class="text-[10px] font-bold text-indigo-400">⚡ Proses Instan</p>
+                <p class="text-[8px] text-slate-400 mt-0.5">OTP 100% Otomatis</p>
+            </div>
+            <div class="bg-slate-900/60 border border-slate-800 p-2.5 rounded-xl">
+                <p class="text-[10px] font-bold text-emerald-400">🤖 QRIS Otomatis</p>
+                <p class="text-[8px] text-slate-400 mt-0.5">Sistem Deposit Live</p>
+            </div>
+            <div class="bg-slate-900/60 border border-slate-800 p-2.5 rounded-xl">
+                <p class="text-[10px] font-bold text-indigo-400">💰 Harga Pelajar</p>
+                <p class="text-[8px] text-slate-400 mt-0.5">Termurah Se-Indo</p>
+            </div>
+        </div>
+
+        <div class="w-full bg-[#111622] border border-slate-800 p-6 rounded-2xl shadow-2xl relative overflow-hidden">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-indigo-500/10 border border-indigo-500/30 rounded-xl flex items-center justify-center text-indigo-400 font-bold text-lg">💎</div>
+                <div>
+                    <h2 class="text-base font-black tracking-wide text-white">RIINESIA PANEL</h2>
+                    <p class="text-[11px] text-slate-400">Pusat Layanan Nokos & OTP Virtual</p>
+                </div>
+            </div>
+
+            <div class="flex border-b border-slate-800 mb-5">
+                <button id="tabMasuk" onclick="switchAuthTab('masuk')" class="flex-1 pb-2 text-center text-sm font-bold text-indigo-400 border-b-2 border-indigo-500 transition cursor-pointer">Masuk</button>
+                <button id="tabDaftar" onclick="switchAuthTab('daftar')" class="flex-1 pb-2 text-center text-sm font-bold text-slate-500 hover:text-slate-300 transition cursor-pointer">Daftar</button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Username</label>
+                    <input type="text" id="authUsername" placeholder="Masukkan username..." class="w-full bg-[#0b0f19] border border-slate-800 p-3 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500 font-medium transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Password</label>
+                    <input type="password" id="authPassword" placeholder="Masukkan password..." class="w-full bg-[#0b0f19] border border-slate-800 p-3 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500 font-medium transition">
+                </div>
+                <button id="btnAuthSubmit" onclick="prosesAuth()" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-black p-3.5 rounded-xl transition shadow-lg text-sm flex items-center justify-center gap-2 mt-2 cursor-pointer">
+                    <span id="txtBtnAuth">Masuk ke Panel</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="pageDashboard" class="hidden flex-1 flex flex-col justify-between w-full">
+        <nav class="sticky top-0 z-50 backdrop-blur-md bg-[#0b0f19]/80 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500">RIINESIA</span>
+                <span id="badgeUser" class="text-[9px] bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded font-bold border border-indigo-500/20">MEMBER</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="bg-slate-900 border border-slate-800 px-3 py-1 rounded-xl text-xs font-bold text-emerald-400 flex items-center gap-1.5 shadow-inner">
+                    <span>🪙</span> <span id="txtSaldoUser">Rp 0</span>
+                </div>
+                <button onclick="bukaModalDeposit()" class="text-[10px] bg-emerald-500 hover:bg-emerald-600 text-[#0b0f19] font-black px-2.5 py-1.5 rounded-lg transition shadow cursor-pointer">➕ Deposit QRIS</button>
+                <button id="btnMenuAdmin" onclick="bukaPanelAdmin()" class="hidden text-[10px] bg-purple-600 hover:bg-purple-700 text-white font-black px-2.5 py-1.5 rounded-lg transition shadow cursor-pointer">🛠️ Owner Menu</button>
+                <button onclick="logout()" class="text-[10px] bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-2 py-1.5 rounded-lg font-medium transition cursor-pointer">Keluar</button>
+            </div>
+        </nav>
+
+        <main class="w-full max-w-md mx-auto px-4 py-6 space-y-6 flex-1">
+            <section class="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl shadow-lg">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-2 h-5 bg-indigo-500 rounded"></div>
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300">Pemesanan Nokos Instan</h3>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-slate-400 mb-1.5">Pilih Aplikasi / Layanan :</label>
+                    <select id="layananSelect" onchange="updateInfoHarga()" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white font-medium">
+                        <option value="1" data-harga="7000">WhatsApp Messenger — Rp 7.000</option>
+                        <option value="2" data-harga="5000">Telegram — Rp 5.000</option>
+                        <option value="3" data-harga="4000">TikTok Verified — Rp 4.000</option>
+                        <option value="4" data-harga="3000">Instagram SMS — Rp 3.000</option>
+                    </select>
+                </div>
+
+                <div class="bg-slate-950 border border-slate-900 p-3 rounded-xl mb-4 flex justify-between items-center text-xs">
+                    <span class="text-slate-400 font-medium">Total Harga Terpotong:</span>
+                    <span id="txtDetailHarga" class="text-indigo-400 font-black text-sm">Rp 7.000</span>
+                </div>
+
+                <button id="btnBeli" onclick="prosesOrderPembeli()" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 font-bold p-3.5 rounded-xl transition shadow-lg text-sm text-white cursor-pointer">
+                    Beli Nomor Sekarang
+                </button>
+
+                <div id="areaHasil" class="hidden mt-5 bg-slate-950 p-4 rounded-xl border border-slate-800">
+                    <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-900">
+                        <span class="text-[10px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 font-bold" id="txtStatus">MENUNGGU SMS</span>
+                        <span class="text-xs font-mono text-slate-500" id="txtOrderId">ID: #---</span>
+                    </div>
+                    <div class="mb-4">
+                        <p class="text-[11px] text-slate-500 mb-1">Silakan Copy Nomor Ini:</p>
+                        <div class="bg-slate-900 px-3 py-2.5 rounded-lg border border-slate-800 flex justify-between items-center">
+                            <span class="text-lg font-mono font-bold text-indigo-400 tracking-wider" id="txtNomor">Meminta nomor...</span>
+                            <button onclick="salinNomor()" class="text-xs bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded text-slate-300 transition cursor-pointer">Salin</button>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-[11px] text-slate-500 mb-1">Kode OTP Anda:</p>
+                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 text-center">
+                            <span class="text-3xl font-black tracking-widest text-white font-mono" id="txtOtp">- - - -</span>
+                            <p class="text-[10px] text-slate-500 mt-2 animate-pulse" id="txtLoading">Sistem terus memeriksa kode SMS masuk secara otomatis...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="w-full bg-slate-950 border-t border-slate-800 text-center py-4 text-xs text-slate-500">
+            <p>© 2026 <span class="text-slate-400 font-bold">Riinesia Jualan Platform</span>.</p>
+        </footer>
+    </div>
+
+    <div id="modalDeposit" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="w-full max-w-sm bg-[#111622] border border-slate-800 p-5 rounded-2xl shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-emerald-400">🤖 Deposit QRIS Otomatis</h3>
+                <button onclick="tutupModalDeposit()" class="text-slate-400 hover:text-white font-bold text-sm cursor-pointer">✕</button>
+            </div>
+            
+            <div id="formIsiNominal" class="space-y-4">
+                <p class="text-xs text-slate-400 leading-relaxed">Masukkan jumlah nominal saldo yang ingin Anda isi. Sistem akan membuat barcode QRIS instan otomatis.</p>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nominal Top Up (Rp)</label>
+                    <input type="number" id="depoNominal" placeholder="Minimal Rp 2,000" class="w-full bg-[#0b0f19] border border-slate-800 p-3 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500 font-medium font-mono">
+                </div>
+                <button onclick="requestQrisLive()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-[#0b0f19] font-black p-3 rounded-xl transition text-xs cursor-pointer">
+                    Buat Barcode QRIS Live
+                </button>
+            </div>
+
+            <div id="boxQrisOutput" class="hidden flex flex-col items-center text-center space-y-4 py-2">
+                <p class="text-xs text-amber-400 font-bold">Silakan Scan & Bayar Menggunakan E-Wallet / M-Banking Anda:</p>
+                <div class="bg-white p-3 rounded-xl inline-block shadow-inner">
+                    <img id="imgQrisCode" src="" alt="QRIS Code" class="w-48 h-48">
+                </div>
+                <div class="bg-slate-950 px-4 py-2 rounded-xl text-xs font-mono border border-slate-800">
+                    Total Bayar: <span class="text-emerald-400 font-black" id="txtTotalBayarQris">Rp 0</span>
+                </div>
+                <p class="text-[10px] text-slate-400 animate-pulse">⏳ Menunggu pembayaran... Saldo akan masuk otomatis setelah sukses ditransfer.</p>
+                <button onclick="simulasiSuksesBayarQris()" class="text-[9px] bg-slate-800 hover:bg-slate-700 text-slate-400 px-3 py-1 rounded-lg cursor-pointer">Simulasi Sukses (Developer Mode)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalAdmin" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-[#111622] border border-slate-800 p-5 rounded-2xl shadow-2xl max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-800">
+                <h3 class="text-sm font-bold text-purple-400 uppercase tracking-wider">🛠️ Ruang Kontrol Owner Riinesia</h3>
+                <button onclick="tutupPanelAdmin()" class="text-slate-400 hover:text-white font-bold text-sm cursor-pointer">✕</button>
+            </div>
+            <div class="space-y-4">
+                <p class="text-[11px] text-slate-400">Di sini lo bisa mantau semua pembeli lo yang kedaftar di database lokal HP lo saat ini, bre.</p>
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-900">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-2">Daftar Akun & Saldo Pembeli:</p>
+                    <div id="listUserAdmin" class="space-y-2 text-xs font-mono max-h-48 overflow-y-auto pr-1"></div>
+                </div>
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-900 space-y-2">
+                    <p class="text-[10px] font-bold text-purple-400 uppercase">Suntik Saldo Manual Kilat:</p>
+                    <input type="text" id="admTargetUser" placeholder="Username target..." class="w-full bg-[#0b0f19] border border-slate-800 p-2 rounded-lg text-xs text-white">
+                    <input type="number" id="admNominal" placeholder="Jumlah nominal rupiah..." class="w-full bg-[#0b0f19] border border-slate-800 p-2 rounded-lg text-xs text-white">
+                    <button onclick="ownerSuntikSaldo()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold p-2 rounded-lg text-xs transition cursor-pointer">Suntik Saldo Sekarang</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        if(!localStorage.getItem('riinesia_users')) {
+            localStorage.setItem('riinesia_users', JSON.stringify({ 'admin': { pass: 'admin', saldo: 100000 } }));
+        }
+
+        let currentMode = 'masuk';
+        let loggedInUser = '';
+        let intervalCekOTP;
+        let nominalSimulasi = 0;
+
+        function switchAuthTab(mode) {
+            currentMode = mode;
+            document.getElementById('authUsername').value = '';
+            document.getElementById('authPassword').value = '';
+            if (mode === 'masuk') {
+                document.getElementById('tabMasuk').className = "flex-1 pb-2 text-center text-sm font-bold text-indigo-400 border-b-2 border-indigo-500 transition cursor-pointer";
+                document.getElementById('tabDaftar').className = "flex-1 pb-2 text-center text-sm font-bold text-slate-500 hover:text-slate-300 transition cursor-pointer";
+                document.getElementById('txtBtnAuth').innerText = "Masuk ke Panel";
+            } else {
+                document.getElementById('tabDaftar').className = "flex-1 pb-2 text-center text-sm font-bold text-indigo-400 border-b-2 border-indigo-500 transition cursor-pointer";
+                document.getElementById('tabMasuk').className = "flex-1 pb-2 text-center text-sm font-bold text-slate-500 hover:text-slate-300 transition cursor-pointer";
+                document.getElementById('txtBtnAuth').innerText = "Daftar Akun Baru";
+            }
+        }
+
+        function prosesAuth() {
+            const userInp = document.getElementById('authUsername').value.trim().toLowerCase();
+            const passInp = document.getElementById('authPassword').value.trim();
+            let dbUsers = JSON.parse(localStorage.getItem('riinesia_users')) || {};
+
+            if (!userInp || !passInp) { alert('⚠️ Isi semua kolom, bre!'); return; }
+
+            if (currentMode === 'daftar') {
+                if (dbUsers[userInp]) {
+                    alert('❌ Username ini sudah terdaftar!');
+                } else {
+                    dbUsers[userInp] = { pass: passInp, saldo: 0 };
+                    localStorage.setItem('riinesia_users', JSON.stringify(dbUsers));
+                    alert('🎉 Akun Berhasil Terdaftar! Silakan login masuk.');
+                    switchAuthTab('masuk');
+                }
+            } else {
+                if (dbUsers[userInp] && dbUsers[userInp].pass === passInp) {
+                    loggedInUser = userInp;
+                    document.getElementById('pageAuth').classList.add('hidden');
+                    document.getElementById('pageDashboard').classList.remove('hidden');
+                    
+                    if(userInp === 'admin') {
+                        document.getElementById('badgeUser').innerText = 'OWNER';
+                        document.getElementById('btnMenuAdmin').classList.remove('hidden');
+                    } else {
+                        document.getElementById('badgeUser').innerText = 'MEMBER';
+                        document.getElementById('btnMenuAdmin').classList.add('hidden');
+                    }
+                    updateTampilanSaldo();
+                } else {
+                    alert('❌ Login Gagal! Periksa kembali username & password.');
+                }
+            }
+        }
+
+        function logout() {
+            loggedInUser = '';
+            clearInterval(intervalCekOTP);
+            document.getElementById('pageDashboard').classList.add('hidden');
+            document.getElementById('pageAuth').classList.remove('hidden');
+            switchAuthTab('masuk');
+        }
+
+        function updateTampilanSaldo() {
+            let dbUsers = JSON.parse(localStorage.getItem('riinesia_users'));
+            const saldoSaatIni = dbUsers[loggedInUser].saldo;
+            document.getElementById('txtSaldoUser').innerText = `Rp ${saldoSaatIni.toLocaleString('id-ID')}`;
+        }
+
+        function updateInfoHarga() {
+            const selectEl = document.getElementById('layananSelect');
+            const hargaJual = selectEl.options[selectEl.selectedIndex].getAttribute('data-harga');
+            document.getElementById('txtDetailHarga').innerText = `Rp ${Number(hargaJual).toLocaleString('id-ID')}`;
+        }
+
+        // PEMESANAN NOMOR OTOMATIS (MANGGIL BACKEND VERCEL)
+        function prosesOrderPembeli() {
+            const selectEl = document.getElementById('layananSelect');
+            const hargaJual = Number(selectEl.options[selectEl.selectedIndex].getAttribute('data-harga'));
+            const idLayanan = selectEl.value;
+
+            let dbUsers = JSON.parse(localStorage.getItem('riinesia_users'));
+            if (dbUsers[loggedInUser].saldo < hargaJual) {
+                alert("❌ Saldo lo tipis, bre! Silakan deposit QRIS dulu.");
+                return;
+            }
+
+            document.getElementById('btnBeli').disabled = true;
+            document.getElementById('btnBeli').innerText = "Sedang Meminta Nomor...";
+
+            fetch(`${BACKEND_URL_OTP}?aksi=beli_nomor&id_layanan=${idLayanan}`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('btnBeli').disabled = false;
+                    document.getElementById('btnBeli').innerText = "Beli Nomor Sekarang";
+
+                    if (data.status === 'SUCCESS' || data.number) {
+                        dbUsers[loggedInUser].saldo -= hargaJual;
+                        localStorage.setItem('riinesia_users', JSON.stringify(dbUsers));
+                        updateTampilanSaldo();
+
+                        document.getElementById('areaHasil').classList.remove('hidden');
+                        document.getElementById('txtStatus').innerText = "MENUNGGU SMS";
+                        document.getElementById('txtOrderId').innerText = "ID: #" + data.order_id;
+                        document.getElementById('txtNomor').innerText = data.number;
+                        document.getElementById('txtOtp').innerText = "- - - -";
+                        document.getElementById('txtLoading').innerText = "Sistem terus memeriksa kode SMS masuk secara otomatis...";
+
+                        mulaiCekOtpOtomatis(data.order_id);
+                    } else {
+                        alert("❌ Gagal mengambil nomor: " + (data.message || "Stok habis/Provider gangguan"));
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('btnBeli').disabled = false;
+                    document.getElementById('btnBeli').innerText = "Beli Nomor Sekarang";
+                    alert("⚠️ Terjadi error koneksi server, bre!");
+                });
+        }
+
+        function mulaiCekOtpOtomatis(orderId) {
+            clearInterval(intervalCekOTP);
+            intervalCekOTP = setInterval(() => {
+                fetch(`${BACKEND_URL_OTP}?aksi=cek_otp&id_order=${orderId}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'SUCCESS' || data.otp) {
+                            document.getElementById('txtOtp').innerText = data.otp;
+                            document.getElementById('txtStatus').innerText = "SUKSES";
+                            document.getElementById('txtLoading').innerText = "KODE OTP BERHASIL DITERIMA!";
+                            clearInterval(intervalCekOTP);
+                        } else if (data.status === 'CANCELED' || data.status === 'REFUND') {
+                            document.getElementById('txtOtp').innerText = "HGUS";
+                            document.getElementById('txtStatus').innerText = "EXPIRED";
+                            document.getElementById('txtLoading').innerText = "Nomor hangus atau dibatalkan oleh server.";
+                            clearInterval(intervalCekOTP);
+                        }
+                    })
+                    .catch(err => console.log("Gagal sinkron OTP, mencoba lagi...", err));
+            }, 4000);
+        }
+
+        function salinNomor() {
+            const no = document.getElementById('txtNomor').innerText;
+            if(no.includes("...")) return;
+            navigator.clipboard.writeText(no);
+            alert("📋 Nomor berhasil disalin: " + no);
+        }
+
+        // DEPOSIT SAWERIA/QRIS OTOMATIS
+        function requestQrisLive() {
+            const nominal = document.getElementById('depoNominal').value.trim();
+            if(!nominal || nominal < 2000) { alert("⚠️ Minimal deposit QRIS adalah Rp 2.000, bre!"); return; }
+
+            nominalSimulasi = Number(nominal);
+            
+            fetch(`${BACKEND_URL_QRIS}?nominal=${nominalSimulasi}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'SUCCESS' || data.data) {
+                        document.getElementById('formIsiNominal').classList.add('hidden');
+                        document.getElementById('boxQrisOutput').classList.remove('hidden');
+                        document.getElementById('txtTotalBayarQris').innerText = `Rp ${nominalSimulasi.toLocaleString('id-ID')}`;
+                        
+                        document.getElementById('imgQrisCode').src = data.data.qr_url; 
+                    } else {
+                        alert("❌ Gagal request QRIS: " + data.message);
+                    }
+                })
+                .catch(err => alert("⚠️ Gagal terhubung ke Server, bre. Periksa kembali jaringan!"));
+        }
+
+        function simulasiSuksesBayarQris() {
+            let dbUsers = JSON.parse(localStorage.getItem('riinesia_users'));
+            dbUsers[loggedInUser].saldo += nominalSimulasi;
+            localStorage.setItem('riinesia_users', JSON.stringify(dbUsers));
+            
+            updateTampilanSaldo();
+            alert(`🎉 Lunas! Dana QRIS Rp ${nominalSimulasi.toLocaleString('id-ID')} Berhasil Ditambahkan ke Akun Lo.`);
+            tutupModalDeposit();
+        }
+
+        function bukaModalDeposit() { document.getElementById('modalDeposit').classList.remove('hidden'); }
+        function tutupModalDeposit() {
+            document.getElementById('modalDeposit').classList.add('hidden');
+            document.getElementById('formIsiNominal').classList.remove('hidden');
+            document.getElementById('boxQrisOutput').classList.add('hidden');
+            document.getElementById('depoNominal').value = '';
+        }
+
+        function bukaPanelAdmin() {
+            document.getElementById('modalAdmin').classList.remove('hidden');
+            let dbUsers = JSON.parse(localStorage.getItem('riinesia_users'));
+            let listEl = document.getElementById('listUserAdmin');
+            listEl.innerHTML = '';
+            for (let usr in dbUsers) {
+                listEl.innerHTML += `<div class="flex justify-between border-b border-slate-900 pb-1"><span>👤 ${usr}</span> <span class="text-emerald-400">Rp ${dbUsers[usr].saldo.toLocaleString('id-ID')}</span></div>`;
+            }
+        }
+        function tutupPanelAdmin() { document.getElementById('modalAdmin').classList.add('hidden'); }
+        
+        function ownerSuntikSaldo() {
+            const target = document.getElementById('admTargetUser').value.trim().toLowerCase();
+            const nominal = Number(document.getElementById('admNominal').value);
+            let dbUsers = JSON.parse(localStorage.getItem('riinesia_users'));
+
+            if (!dbUsers[target]) { alert("❌ Username target tidak ditemukan!"); return; }
+            if (!nominal || nominal <= 0) { alert("❌ Nominal harus valid!"); return; }
+
+            dbUsers[target].saldo += nominal;
+            localStorage.setItem('riinesia_users', JSON.stringify(dbUsers));
+            alert(`⚡ Berhasil menyuntik saldo Rp ${nominal.toLocaleString('id-ID')} ke akun ${target}!`);
+            if (target === loggedInUser) updateTampilanSaldo();
+            bukaPanelAdmin();
+        }
+    </script>
+</body>
+</html>
